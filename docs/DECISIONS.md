@@ -44,3 +44,52 @@ Fix: inverter a ordem — checar categorias de defeito específicas primeiro, e 
 padrão de estado genérico se nenhuma categoria bateu. Regra geral: um nome de defeito
 explícito no rótulo é mais informativo do que uma palavra de estado genérica usada como
 sufixo de variação experimental.
+
+## Similaridade (src/similarity)
+
+### Features escolhidas
+
+17 features numéricas do banner.csv, excluindo pares redundantes de unidade
+(`z_rms_velocity_in_s` vs `z_rms_velocity_mm_s`, `temperature_f` vs `temperature_c` etc.)
+para não dobrar o peso da mesma grandeza na distância euclidiana. `rpm` entra como feature
+normal (ver abaixo por que isso já é suficiente para segregar por rotação).
+
+### Acurácia medida da busca por similaridade (k=25, k-NN + StandardScaler + FAISS)
+
+Amostragem de 20 eventos por categoria de defeito (semente fixa), comparando a categoria
+prevista (maioria entre os 25 vizinhos mais próximos) com a categoria real:
+
+| Categoria | Acurácia |
+|---|---|
+| rolamento | 95% |
+| correia | 85% |
+| desalinhamento | 80% |
+| falta_fase | 80% |
+| ventoinha | 75% |
+| polia | 75% |
+| eccentric_rotor | 70% |
+| desbalanceamento | 65% |
+| cocked_rotor | 35% |
+| **Geral** | **73,3%** |
+
+**Achado:** a acurácia depende fortemente do RPM do evento. Em 500 RPM (rotação baixa),
+a acurácia despenca (ex.: `cocked_rotor` 14%, `polia` e `falta_fase` 0%); em 2000+ RPM,
+sobe para 80–100% na maioria das categorias. Isso é consistente com a física descrita em
+`data/docs/Doc3.pdf` ("quanto maior a rotação, maior a vibração causada pelo defeito") —
+em baixa rotação, o sinal da falha ainda incipiente se aproxima do ruído de base, tornando
+categorias diferentes numericamente parecidas.
+
+Tentativa de correção: restringir os vizinhos à mesma faixa de RPM do evento antes da
+votação por maioria (`src/similarity/search.py`). Resultado: **nenhuma mudança na
+acurácia** — verificado que o próprio `rpm` padronizado já domina tanto a distância
+euclidiana que os vizinhos mais próximos, mesmo sem filtro explícito, já pertencem quase
+sempre à mesma faixa de rotação. O filtro foi mantido como salvaguarda explícita e barata
+(protege contra mudanças futuras no conjunto de features), mas o teto real de acurácia
+vem da sobreposição entre categorias **dentro** da mesma rotação, não de rotações
+diferentes se misturando.
+
+Decisão: aceitar 73,3% como linha de base do v1 (validado por teste estatístico, não por
+um caso escolhido a dedo) e documentar como limitação conhecida — não como bug. Melhorias
+futuras possíveis: (1) features específicas de frequência de defeito (BPFO/BPFI/BSF/FTF,
+descritas em `Doc1.pdf`) em vez de estatísticas genéricas de amplitude; (2) modelo
+supervisionado por faixa de RPM. Fora do escopo do prazo atual.

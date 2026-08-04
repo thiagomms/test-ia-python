@@ -31,4 +31,5 @@ Prova-20260804T121607Z-1-001/
 # IDE / OS
 .vscode/
 .idea/
+.claude/
 Thumbs.db
