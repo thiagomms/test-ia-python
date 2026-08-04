@@ -93,3 +93,30 @@ um caso escolhido a dedo) e documentar como limitação conhecida — não como 
 futuras possíveis: (1) features específicas de frequência de defeito (BPFO/BPFI/BSF/FTF,
 descritas em `Doc1.pdf`) em vez de estatísticas genéricas de amplitude; (2) modelo
 supervisionado por faixa de RPM. Fora do escopo do prazo atual.
+
+## RAG (src/rag)
+
+### Doc1.pdf não tem texto extraível — é uma imagem
+
+Ao testar a ingestão isoladamente (fora do build completo do índice, que mascarava o
+problema porque os outros 5 PDFs continuavam funcionando), `load_and_chunk("Doc1.pdf")`
+retornou 0 chunks. Investigação: nem `pypdf` (usado inicialmente via `PyPDFLoader`) nem
+`PyMuPDF` extraem qualquer texto de `Doc1.pdf` — 0 e 36 caracteres em 17 páginas,
+respectivamente — embora o arquivo tenha uma camada de fonte (`Calibri`) e duas imagens
+embutidas na primeira página. Conclusão: diferente dos outros 5 documentos, `Doc1.pdf`
+foi gerado a partir de uma captura de tela/imagem do conteúdo (provavelmente colada em um
+editor e exportada para PDF), não como texto nativo — por isso é justamente a leitura
+multimodal (visão) que consegue "ler" a página, mas qualquer parser de texto tradicional
+falha silenciosamente.
+
+Isso é crítico porque `Doc1.pdf` é o procedimento de **rolamento**, a maior categoria de
+defeito da base (60.779 registros, 36% do total) — se não corrigido, o RAG simplesmente
+não teria contexto para o defeito mais comum, sem nenhum erro visível.
+
+**Correção**: `src/rag/ingest.py` extrai texto nativo primeiro (`PyMuPDF`) e, apenas
+quando uma página vem com menos de 20 caracteres, renderiza a página como imagem e aplica
+OCR via `RapidOCR` (motor ONNXRuntime, 100% local, sem depender de instalar um binário de
+sistema como o Tesseract — mantém a premissa de "zero infraestrutura extra" na estação
+comercial). Validado: OCR extrai o texto de `Doc1.pdf` com confiança >97% por linha.
+Custo extra de OCR só é pago pelo documento que realmente precisa (os outros 5 continuam
+usando extração nativa, instantânea).

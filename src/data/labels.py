@@ -11,7 +11,15 @@ Este módulo classifica cada rótulo em:
   ou deve reportar "problema sem documentação".
 """
 
+import json
 import re
+from pathlib import Path
+
+# Documentos registrados em tempo de execução pelo usuário (via app/chat) para
+# categorias que nasceram sem documentação (eccentric_rotor, ventoinha,
+# falta_fase). Fica em data/index/ porque é estado derivado/mutável, não
+# versionado — ver .gitignore.
+OVERRIDES_PATH = Path("data/index/category_doc_overrides.json")
 
 STATE_PATTERN = re.compile(
     r"normal|normla|baseline|teste|_tes$|acelerando|desligado", re.IGNORECASE
@@ -52,16 +60,39 @@ CATEGORY_TO_DOC = {
 }
 
 
-def normalize_fault(raw_label: str) -> dict:
+def load_doc_overrides() -> dict:
+    """Lê os documentos registrados em tempo de execução (se existir o arquivo)."""
+    if OVERRIDES_PATH.exists():
+        return json.loads(OVERRIDES_PATH.read_text(encoding="utf-8"))
+    return {}
+
+
+def register_document_override(category: str, doc_file: str) -> None:
+    """Associa um documento recém-cadastrado a uma categoria sem procedimento.
+
+    Usado pelo fluxo do app quando o usuário registra um novo documento para
+    um defeito sem documentação (ver Figura 01 do edital). Depois de chamar
+    isto, o índice de similaridade precisa ser reconstruído
+    (src.similarity.build.build_index) para que has_documentation reflita a
+    mudança nos eventos já carregados.
+    """
+    overrides = load_doc_overrides()
+    overrides[category] = doc_file
+    OVERRIDES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OVERRIDES_PATH.write_text(json.dumps(overrides, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def normalize_fault(raw_label: str, category_to_doc: dict | None = None) -> dict:
     """Classifica um rótulo bruto de `fault` em estado ou categoria de defeito."""
     label = raw_label.lower()
+    category_to_doc = category_to_doc or CATEGORY_TO_DOC
 
     # Nome de defeito específico vence palavra de estado genérica: rótulos como
     # "rolamento_outer_novo_teste" são um defeito de rolamento repetido em uma
     # rodada de teste, não um estado "teste" sem problema.
     for category, pattern in CATEGORY_PATTERNS:
         if pattern.search(label):
-            doc_file = CATEGORY_TO_DOC[category]
+            doc_file = category_to_doc.get(category)
             return {
                 "raw": raw_label,
                 "is_problem": True,
@@ -92,7 +123,10 @@ def build_label_mapping(unique_labels) -> "pd.DataFrame":
     """Aplica normalize_fault sobre os rótulos únicos e retorna um DataFrame."""
     import pandas as pd
 
-    mapping = pd.DataFrame(normalize_fault(label) for label in unique_labels)
+    category_to_doc = {**CATEGORY_TO_DOC, **load_doc_overrides()}
+    mapping = pd.DataFrame(
+        normalize_fault(label, category_to_doc) for label in unique_labels
+    )
     # dtype nullable ("boolean", não "bool") porque estados operacionais têm
     # has_documentation = None (não se aplica) — bool comum não aceita None.
     mapping["has_documentation"] = mapping["has_documentation"].astype("boolean")

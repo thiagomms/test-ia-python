@@ -14,9 +14,12 @@ langchain-core
 langchain-community
 langchain-groq
 langchain-ollama
+langchain-text-splitters
 faiss-cpu
 fastembed
-pypdf
+pymupdf
+rapidocr
+onnxruntime
 
 # Utilitários
 python-dotenv
