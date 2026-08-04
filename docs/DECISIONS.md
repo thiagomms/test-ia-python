@@ -120,3 +120,20 @@ sistema como o Tesseract — mantém a premissa de "zero infraestrutura extra" n
 comercial). Validado: OCR extrai o texto de `Doc1.pdf` com confiança >97% por linha.
 Custo extra de OCR só é pago pelo documento que realmente precisa (os outros 5 continuam
 usando extração nativa, instantânea).
+
+## LLM (src/llm)
+
+### Trava anti-alucinação é decidida antes do LLM existir na jogada
+
+O edital exige que o sistema "se detenha unicamente a problemas que possuem documentos" e
+reporte a ausência de documentação em vez de inventar uma correção. A tentação óbvia seria
+resolver isso via prompt ("responda apenas com base no contexto, diga se não souber") —
+mas isso depende do LLM obedecer, o que não é garantia nenhuma.
+
+Em vez disso, `analyze_event()` (`src/llm/chat.py`) decide **antes de qualquer chamada de
+rede** se o LLM será acionado: quando `has_documentation` é `False` (resultado da busca por
+similaridade, calculado sem LLM), a função retorna a mensagem fixa de "sem documentação" e
+nem chega a montar um prompt ou consultar o RAG. O LLM simplesmente nunca vê esses casos —
+não existe alucinação possível porque não existe geração de texto envolvida.
+Testado em `tests/test_llm_chat.py` com um LLM stub que falha o teste se for chamado
+(`assert llm_stub.chamadas == []`) nesses dois caminhos (sem problema / sem documentação).
