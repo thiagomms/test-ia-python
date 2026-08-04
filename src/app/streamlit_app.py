@@ -172,12 +172,17 @@ elif aba == "Novo evento":
             if pergunta:
                 historico = st.session_state.setdefault("historico_chat", [])
                 historico.append(("user", pergunta))
-                try:
-                    resposta = ask_about_category(pergunta, sim["categoria_provavel"])
-                except Exception as erro:
-                    resposta = f"Erro ao consultar o LLM: {erro}"
+                with st.chat_message("user"):
+                    st.write(pergunta)
+
+                with st.chat_message("assistant"):
+                    with st.spinner("Consultando a documentação..."):
+                        try:
+                            resposta = ask_about_category(pergunta, sim["categoria_provavel"])
+                        except Exception as erro:
+                            resposta = f"Erro ao consultar o LLM: {erro}"
+                    st.write(resposta)
                 historico.append(("assistant", resposta))
-                st.rerun()
 
 elif aba == "Documentos":
     st.header("Documentos cadastrados")
