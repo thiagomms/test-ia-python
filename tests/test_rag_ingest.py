@@ -37,6 +37,22 @@ def test_retrieve_for_category_nao_mistura_categorias(vectorstore_construido):
     assert all(r.metadata["category"] == "cocked_rotor" for r in resultados)
 
 
+def test_retrieve_for_category_encontra_trecho_pouco_proximo_globalmente(vectorstore_construido):
+    """Regressão: sem fetch_k explícito, o FAISS do LangChain busca um pool
+    pequeno de vizinhos globais antes de filtrar por categoria — a seção
+    'Critérios de Aceitação' do cocked_rotor (Doc6.pdf) não estava entre os 5
+    vizinhos mais próximos globalmente, então sumia mesmo existindo no índice.
+    Ver notas-internas/DECISIONS.md."""
+    resultados = ingest.retrieve_for_category(
+        "quais os critérios de aceitação?", category="cocked_rotor", k=5
+    )
+
+    assert len(resultados) == 5
+    assert any(
+        "critérios de aceitação" in r.page_content.lower() for r in resultados
+    )
+
+
 def test_add_document_ingesta_e_registra_categoria_sem_documentacao(tmp_path, monkeypatch):
     import shutil
 

@@ -132,8 +132,17 @@ def add_document(pdf_path: Path, category: str) -> None:
 
 
 def retrieve_for_category(query: str, category: str, k: int = 4) -> list[Document]:
-    """Busca os trechos mais relevantes dentro do documento de uma categoria."""
+    """Busca os trechos mais relevantes dentro do documento de uma categoria.
+
+    A implementação de FAISS do LangChain, ao usar `filter`, busca primeiro os
+    `fetch_k` vizinhos mais próximos SEM considerar a categoria e só depois
+    filtra — com poucos chunks por documento, isso deixa passagens relevantes
+    de fora quando elas não estão entre as mais próximas globalmente (ver
+    notas-internas/DECISIONS.md). Como o acervo é pequeno (dezenas de chunks
+    por categoria, no máximo poucas centenas no total), buscar essencialmente
+    o índice inteiro como pool de candidatos é barato e resolve o problema.
+    """
     vectorstore = load_vectorstore()
     return vectorstore.similarity_search(
-        query, k=k, filter={"category": category}
+        query, k=k, filter={"category": category}, fetch_k=vectorstore.index.ntotal
     )
