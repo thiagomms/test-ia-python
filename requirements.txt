@@ -19,6 +19,3 @@ pypdf
 
 # Utilitários
 python-dotenv
-
-# Testes
-pytest

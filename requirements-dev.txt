@@ -1,0 +1,4 @@
+# Dependências apenas de desenvolvimento (testes, notebooks) — não usadas
+# pela aplicação em produção. Instalar com: pip install -r requirements.txt -r requirements-dev.txt
+pytest
+jupyter
