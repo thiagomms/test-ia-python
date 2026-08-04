@@ -1,0 +1,21 @@
+# Dados e análise
+pandas
+numpy
+scikit-learn
+plotly
+
+# Interface
+streamlit
+
+# Orquestração LLM / RAG
+langchain
+langchain-core
+langchain-community
+langchain-groq
+langchain-ollama
+faiss-cpu
+fastembed
+pypdf
+
+# Utilitários
+python-dotenv
