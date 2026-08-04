@@ -22,14 +22,9 @@ data/index/
 *.pkl
 .cache/
 
-# Download original do Google Drive (duplicado, mantido fora do versionamento)
-Prova-20260804T121607Z-1-001/
 
 # Notebooks
 .ipynb_checkpoints/
 
-# IDE / OS
 .vscode/
 .idea/
-.claude/
-Thumbs.db
