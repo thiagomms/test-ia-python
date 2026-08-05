@@ -10,7 +10,7 @@ defeito identificado, o sistema reporta isso explicitamente e permite cadastrar
 um novo procedimento, em vez de inventar uma resposta.
 
 Projeto desenvolvido para o processo seletivo de Desenvolvedor Full Stack —
-I.A. e Python do SENAI SC.
+I.A. e Python - FIESC SC.
 
 ## Arquitetura
 
