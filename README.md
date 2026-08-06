@@ -7,7 +7,7 @@ quando existe procedimento documentado para aquela categoria, usa um LLM para
 explicar o defeito e recomendar a correção — com base exclusivamente no
 documento técnico correspondente. Quando não existe documentação para o
 defeito identificado, o sistema reporta isso explicitamente e permite cadastrar
-um novo procedimento, em vez de inventar uma resposta.
+um novo procedimento, em vez de sugerir uma resposta.
 
 Projeto desenvolvido para o processo seletivo de Desenvolvedor Full Stack —
 I.A. e Python - FIESC SC.
