@@ -71,8 +71,19 @@ Edite `.env` e preencha `GROQ_API_KEY`.
 
 ### 5. Rodar o app
 
+Na raiz do repositório (com o `.venv` já criado e as dependências instaladas):
+
 ```bash
-streamlit run src/app/streamlit_app.py
+# Windows (recomendado — usa o Python do .venv sem depender do PATH)
+.\.venv\Scripts\python.exe -m streamlit run src/app/streamlit_app.py
+
+# Alternativa: ativar o venv e chamar o streamlit
+# .\.venv\Scripts\activate
+# streamlit run src/app/streamlit_app.py
+
+# Linux/Mac
+# source .venv/bin/activate
+# streamlit run src/app/streamlit_app.py
 ```
 
 Na primeira execução, o app constrói automaticamente os índices de
