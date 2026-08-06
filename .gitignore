@@ -12,8 +12,7 @@ dist/
 .env
 .streamlit/secrets.toml
 
-# Dados brutos (grandes, baixados do Drive - ver data/README.md)
-data/raw/*.csv
+# Dados brutos: banner.csv é versionado; planilhas .xlsx continuam locais
 data/raw/*.xlsx
 
 # Artefatos gerados (indices vetoriais, modelos, cache) - regeneraveis via pipeline
